@@ -10,9 +10,16 @@ set -a
 source ${CONF_FILE}
 set +a
 
+cd ${WORKING_DIR}/Deployment/terraform
+REPO_URL="$(terraform output ecr_repo)"
+AWS_ACCOUNT_ID="$(terraform output aws_account_id)"
+
 cd ${WORKING_DIR}
+# Set tag is the current date time in second format
+IMAGE_TAG="$(date +%s)"
 
-docker build . -t ${IMAGE_NAME}:latest
+# Login to ECR
+aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
-# TODO
-# Docker push command to push to a registry
+docker build . -t ${REPO_URL}/${IMAGE_NAME}:${IMAGE_TAG}
+docker push ${REPO_URL}/${IMAGE_NAME}:${IMAGE_TAG}
